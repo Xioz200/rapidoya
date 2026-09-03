@@ -17,5 +17,8 @@
   "bugs": {
     "url": "https://github.com/Serna-Sebastian-06/rapidoya/issues"
   },
-  "homepage": "https://github.com/Serna-Sebastian-06/rapidoya#readme"
+  "homepage": "https://github.com/Serna-Sebastian-06/rapidoya#readme",
+  "dependencies": {
+    "chalk": "^6.0.0"
+  }
 }
