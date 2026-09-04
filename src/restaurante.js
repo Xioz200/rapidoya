@@ -4,7 +4,7 @@
 export const verificarRestaurante = (nombreRestaurante, callback) => {
   // Aviso nativo sin librerías externas para cumplir la restricción de "0 paquetes npm"
   console.log(
-    `\n⏳ Verificando disponibilidad de: ${nombreRestaurante}...`,
+    `\n⏳ [Restaurante] Verificando disponibilidad de: ${nombreRestaurante}...`,
   );
 
   const tiempoEspera = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
