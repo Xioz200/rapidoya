@@ -42,4 +42,8 @@ export const verificarRestaurantePromise = (nombreRestaurante) => {
       else resolve(data);
     });
   });
+ jeronimo
 };
+
+};
+ main
