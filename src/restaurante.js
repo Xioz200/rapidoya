@@ -1,37 +1,45 @@
-// 1. Función original con Callback
+// 1. Módulo heredado (RF-1)
+// Se mantiene la firma original con callback para simular un sistema antiguo (legacy)
+// y cumplir con la restricción de diseño de caja negra estipulada en el requerimiento.
 export const verificarRestaurante = (nombreRestaurante, callback) => {
-    // Generar un tiempo de espera aleatorio entre 1 y 2 segundos (1000ms a 2000ms)
-    const tiempoEspera = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
+  // Aviso nativo sin librerías externas para cumplir la restricción de "0 paquetes npm"
+  console.log(
+    `\n⏳ Verificando disponibilidad de: ${nombreRestaurante}...`,
+  );
 
-    setTimeout(() => {
-        // Generar un número aleatorio entre 0 y 1 para calcular el 20% de probabilidad de fallo
-        const probabilidadFallo = Math.random();
+  const tiempoEspera = Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
 
-        if (probabilidadFallo < 0.20) {
-            // El patrón estándar en Node.js es: callback(error, data)
-            callback(new Error(`El restaurante ${nombreRestaurante} está cerrado o fuera de cobertura.`), null);
-        } else {
-            const infoRestaurante = {
-                nombre: nombreRestaurante,
-                estado: "Disponible",
-                tiempoEstimadoPreparacion: "15 min"
-            };
-            callback(null, infoRestaurante);
-        }
-    }, tiempoEspera);
+  setTimeout(() => {
+    const probabilidadFallo = Math.random();
+
+    // Utilizamos el patrón Error-First Callback estándar de Node.js para propagar
+    // limpiamente la excepción (20% de fallo simulado) hacia el adaptador superior.
+    if (probabilidadFallo < 0.2) {
+      callback(
+        new Error(
+          `El restaurante ${nombreRestaurante} está cerrado o fuera de cobertura.`,
+        ),
+        null,
+      );
+    } else {
+      const infoRestaurante = {
+        nombre: nombreRestaurante,
+        estado: "Disponible",
+        tiempoEstimadoPreparacion: "15 min",
+      };
+      callback(null, infoRestaurante);
+    }
+  }, tiempoEspera);
 };
 
-// 2. Adaptador (Promisificación)
-// Esta es la función que se exporta para que el Integrante 6 la consuma con async/await
+// 2. Adaptador de Promisificación
+// Envolvemos el callback heredado en una Promise nativa. Esto permite que el orquestador principal (app.js)
+// pueda consumirlo utilizando async/await y try/catch, unificando el control de flujo sin modificar la firma original.
 export const verificarRestaurantePromise = (nombreRestaurante) => {
-    return new Promise((resolve, reject) => {
-        // Llamamos a la función original que usa callbacks
-        verificarRestaurante(nombreRestaurante, (error, data) => {
-            if (error) {
-                reject(error); // Si hay error, rechazamos la promesa
-            } else {
-                resolve(data); // Si es exitoso, resolvemos la promesa con los datos
-            }
-        });
+  return new Promise((resolve, reject) => {
+    verificarRestaurante(nombreRestaurante, (error, data) => {
+      if (error) reject(error);
+      else resolve(data);
     });
+  });
 };
