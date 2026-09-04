@@ -34,16 +34,19 @@ export const verificarRestaurante = (nombreRestaurante, callback) => {
 
 // 2. Adaptador de Promisificación
 // Envolvemos el callback heredado en una Promise nativa. Esto permite que el orquestador principal (app.js)
-// pueda consumirlo utilizando async/await y try/catch, unificando el control de flujo sin modificar la firma original.
+// pueda consumirlo utilizando async/await y try/catch, unificando el control de flujo.
 export const verificarRestaurantePromise = (nombreRestaurante) => {
   return new Promise((resolve, reject) => {
     verificarRestaurante(nombreRestaurante, (error, data) => {
-      if (error) reject(error);
-      else resolve(data);
+      if (error) {
+        // RF-7: Enriquecemos el error legacy antes de rechazar la promesa hacia el orquestador
+        error.etapa = "Verificación de Restaurante";
+        error.causa = "Local cerrado o fuera de cobertura";
+        error.datos = { restaurante: nombreRestaurante };
+        reject(error);
+      } else {
+        resolve(data);
+      }
     });
   });
- jeronimo
 };
-
-};
- main

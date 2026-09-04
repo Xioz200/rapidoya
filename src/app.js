@@ -1,542 +1,139 @@
-// ============================================================
-// RAPIDOYA - PROYECTO INTEGRADOR
-// ============================================================
-
-// ============================================================
-// MÓDULO: RESTAURANTE
-// ============================================================
-
-function verificarRestaurante(nombreRestaurante, callback) {
-    console.log(
-        `\n⏳ [Restaurante] Verificando disponibilidad de: ${nombreRestaurante}...`
-    );
-
-    const tiempoEspera =
-        Math.floor(Math.random() * (2000 - 1000 + 1)) + 1000;
-
-    setTimeout(() => {
-        const probabilidadFallo = Math.random();
-
-        if (probabilidadFallo < 0.2) {
-            callback(
-                new Error(
-                    `El restaurante ${nombreRestaurante} está cerrado o fuera de cobertura.`
-                ),
-                null
-            );
-        } else {
-            callback(null, {
-                nombre: nombreRestaurante,
-                estado: "Disponible",
-                tiempoEstimadoPreparacion: "15 min"
-            });
-        }
-    }, tiempoEspera);
-}
-
-function verificarRestaurantePromise(nombreRestaurante) {
-    return new Promise((resolve, reject) => {
-        verificarRestaurante(nombreRestaurante, (error, data) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve(data);
-            }
-        });
-    });
-}
-
-
-// ============================================================
-// MÓDULO: INVENTARIO
-// ============================================================
-
-function consultarProducto(nombre, cantidad) {
-    return new Promise((resolve, reject) => {
-        const tiempoEspera =
-            Math.floor(Math.random() * (1500 - 500 + 1)) + 500;
-
-        setTimeout(() => {
-            const probabilidadAgotado = Math.random() < 0.15;
-
-            if (probabilidadAgotado) {
-                reject(
-                    new Error(`Producto "${nombre}" está AGOTADO`)
-                );
-            } else {
-                const precio =
-                    (Math.random() * 100 + 10).toFixed(2);
-
-                resolve({
-                    producto: nombre,
-                    cantidad: cantidad,
-                    precio: parseFloat(precio),
-                    disponible: true,
-                    mensaje:
-                        `${cantidad} unidad(es) de "${nombre}" disponibles a $${precio} c/u`
-                });
-            }
-        }, tiempoEspera);
-    });
-}
-
-function validarInventario(productos) {
-    console.log("\n📦 [Inventario] Verificando productos...");
-    console.log(
-        "🔄 Consultando todos los productos simultáneamente..."
-    );
-
-    const promesas = productos.map(producto =>
-        consultarProducto(
-            producto.nombre,
-            producto.cantidad
-        )
-    );
-
-    return Promise.all(promesas)
-        .then(resultados => {
-            console.log(
-                "✅ Todos los productos están disponibles."
-            );
-
-            resultados.forEach((resultado, index) => {
-                console.log(
-                    `   ${index + 1}. ${resultado.mensaje}`
-                );
-            });
-
-            return {
-                exito: true,
-                productos: resultados,
-                mensaje: "Inventario confirmado"
-            };
-        })
-        .catch(error => {
-            console.log(
-                `❌ Error en inventario: ${error.message}`
-            );
-
-            return {
-                exito: false,
-                error: error.message,
-                mensaje: "Pedido cancelado - producto agotado"
-            };
-        });
-}
-
-
-// ============================================================
-// MÓDULO: PAGO
-// ============================================================
-
-function procesarPago(monto, datosCliente) {
-    return new Promise((resolve, reject) => {
-        console.log("\n💳 [Pago] Procesando pago...");
-
-        const tiempo =
-            Math.floor(Math.random() * 1501) + 1500;
-
-        setTimeout(() => {
-            const probabilidad = Math.random();
-
-            if (probabilidad < 0.25) {
-                const errores = [
-                    "Fondos insuficientes",
-                    "Tarjeta bloqueada",
-                    "Tiempo de espera agotado"
-                ];
-
-                const error =
-                    errores[
-                        Math.floor(
-                            Math.random() * errores.length
-                        )
-                    ];
-
-                reject(new Error(error));
-                return;
-            }
-
-            const idTransaccion =
-                "TX-" + Date.now();
-
-            resolve({
-                exitoso: true,
-                idTransaccion: idTransaccion,
-                monto: monto,
-                cliente: datosCliente
-            });
-        }, tiempo);
-    });
-}
-
-
-// ============================================================
-// MÓDULO: REPARTIDOR
-// ============================================================
-
-function asignarRepartidor(zonaEntrega) {
-    return new Promise((resolve, reject) => {
-        const retardo =
-            Math.floor(Math.random() * (2500 - 1000 + 1)) + 1000;
-
-        console.log(
-            "\n🛵 [Repartidor] Buscando conductor..."
-        );
-
-        setTimeout(() => {
-            const fallo = Math.random() <= 0.10;
-
-            if (fallo) {
-                reject(
-                    new Error(
-                        `No hay repartidores disponibles en la zona: ${zonaEntrega}`
-                    )
-                );
-            } else {
-                resolve({
-                    idRepartidor: "REP-456",
-                    zona: zonaEntrega,
-                    tiempoBusqueda: retardo + "ms"
-                });
-            }
-        }, retardo);
-    });
-}
-
-async function regresarPago(idTransaccion) {
-    console.log(
-        `\n🔄 [Compensación] Devolviendo pago ${idTransaccion}...`
-    );
-
-    await new Promise(resolve =>
-        setTimeout(resolve, 400)
-    );
-
-    console.log(
-        "✅ [Compensación] Dinero devuelto con éxito."
-    );
-}
-
-
-// ============================================================
-// MÓDULO: NOTIFICACIONES
-// ============================================================
-
-function esperarTiempo() {
-    const tiempo =
-        Math.floor(Math.random() * (1000 - 300 + 1)) + 300;
-
-    return new Promise(resolve => {
-        setTimeout(resolve, tiempo);
-    });
-}
-
-function tieneError() {
-    return Math.random() < 0.30;
-}
-
-async function enviarCorreo(cliente) {
-    await esperarTiempo();
-
-    if (tieneError()) {
-        throw new Error(
-            "No se pudo enviar el correo"
-        );
-    }
-
-    return `Correo enviado correctamente a ${cliente.correo}`;
-}
-
-async function enviarSMS(cliente) {
-    await esperarTiempo();
-
-    if (tieneError()) {
-        throw new Error(
-            "No se pudo enviar el SMS"
-        );
-    }
-
-    return `SMS enviado correctamente al número ${cliente.telefono}`;
-}
-
-async function enviarPush(cliente) {
-    await esperarTiempo();
-
-    if (tieneError()) {
-        throw new Error(
-            "No se pudo enviar la notificación Push"
-        );
-    }
-
-    return `Notificación Push enviada correctamente a ${cliente.nombre}`;
-}
-
-async function notificarCliente(cliente) {
-    console.log(
-        "\n📢 [Notificaciones] Enviando notificaciones..."
-    );
-
-    const resultados = await Promise.allSettled([
-        enviarCorreo(cliente),
-        enviarSMS(cliente),
-        enviarPush(cliente)
-    ]);
-
-    const tipos = [
-        "📧 Correo",
-        "📱 SMS",
-        "🔔 Push"
-    ];
-
-    resultados.forEach((resultado, index) => {
-        if (resultado.status === "fulfilled") {
-            console.log(
-                `✅ ${tipos[index]}: ${resultado.value}`
-            );
-        } else {
-            console.log(
-                `❌ ${tipos[index]}: ${resultado.reason.message}`
-            );
-        }
-    });
-
-    return resultados;
-}
-
-
-// ============================================================
-// DATOS DEL PEDIDO
-// ============================================================
-
-const cliente = {
-    nombre: "Jerónimo",
-    correo: "cliente@ejemplo.com",
-    telefono: "3001234567"
-};
-
-const pedido = {
-    restaurante: "RapidoYa",
-    zonaEntrega: "Centro",
-
-    productos: [
-        {
-            nombre: "Hamburguesa",
-            cantidad: 2
-        },
-        {
-            nombre: "Papas",
-            cantidad: 1
-        },
-        {
-            nombre: "Gaseosa",
-            cantidad: 2
-        }
-    ],
-
-    cliente: cliente
-};
-
-
-// ============================================================
-// ORQUESTADOR PRINCIPAL
-// ============================================================
-
-async function procesarPedido(pedido) {
-
-    console.log("\n");
-    console.log("================================================");
-    console.log("        🚀 RAPIDOYA - NUEVO PEDIDO");
-    console.log("================================================");
-
-    console.log(`👤 Cliente: ${pedido.cliente.nombre}`);
-    console.log(`🏪 Restaurante: ${pedido.restaurante}`);
-    console.log(`📍 Zona: ${pedido.zonaEntrega}`);
-
-    let idTransaccion = null;
+// ============================================
+// app.js - ORQUESTADOR CENTRAL "RápidoYa"
+// ============================================
+
+import { verificarRestaurantePromise } from './restaurante.js';
+import { validarInventario } from './inventario.js';
+import { procesarPago, reversarPago } from './pago.js';
+import { asignarRepartidor } from './repartidor.js';
+import { notificarCliente } from './notificaciones.js';
+
+/**
+ * RF-6: Flujo principal
+ * Orquesta las cinco etapas de forma secuencial. Se utiliza async/await para garantizar 
+ * que el código se lea de arriba hacia abajo, simulando una "receta de cocina".
+ */
+const procesarPedido = async (pedido) => {
+    console.log(`\n==================================================`);
+    console.log(`🍔 INICIANDO PEDIDO: ${pedido.identificador} - Cliente: ${pedido.nombreCliente}`);
+    
+    // Bandera de estado transaccional para la lógica de compensación (RF-4)
+    let idTransaccionConfirmada = null; 
+    
+    // Objeto para medir la duración de cada etapa según la exigencia final de RF-6
+    const tiempos = {}; 
 
     try {
+        // [1] Verificar Restaurante
+        let inicioPaso = Date.now();
+        const infoRestaurante = await verificarRestaurantePromise(pedido.restaurante);
+        tiempos.restaurante = `${Date.now() - inicioPaso} ms`;
+        console.log(`✅ [1] Restaurante verificado: ${infoRestaurante.nombre}`);
 
-        // ----------------------------------------------------
-        // 1. VERIFICAR RESTAURANTE
-        // ----------------------------------------------------
+        // [2] Validar Inventario
+        inicioPaso = Date.now();
+        await validarInventario(pedido.productos);
+        tiempos.inventario = `${Date.now() - inicioPaso} ms`;
+        console.log(`✅ [2] Inventario confirmado para ${pedido.productos.length} producto(s).`);
 
-        console.log("\n🔎 PASO 1: RESTAURANTE");
+        // [3] Procesar Pago
+        inicioPaso = Date.now();
+        const infoPago = await procesarPago(pedido.montoTotal, pedido.datosContacto);
+        idTransaccionConfirmada = infoPago.idTransaccion; // Guardamos el ID por si la logística falla
+        tiempos.pago = `${Date.now() - inicioPaso} ms`;
+        console.log(`✅ [3] Pago aprobado. TX: ${idTransaccionConfirmada}`);
 
-        const restaurante =
-            await verificarRestaurantePromise(
-                pedido.restaurante
-            );
+        // [4] Asignar Repartidor
+        inicioPaso = Date.now();
+        const infoRepartidor = await asignarRepartidor(pedido.zonaEntrega);
+        tiempos.repartidor = `${Date.now() - inicioPaso} ms`;
+        console.log(`✅ [4] Repartidor asignado: ${infoRepartidor.idRepartidor}`);
 
-        console.log(
-            `✅ Restaurante disponible: ${restaurante.nombre}`
-        );
+        // [5] Notificar Cliente
+        inicioPaso = Date.now();
+        const reporteNotificaciones = await notificarCliente(pedido.datosContacto);
+        tiempos.notificaciones = `${Date.now() - inicioPaso} ms`;
+        console.log(`✅ [5] Proceso de notificaciones finalizado.`);
 
-        console.log(
-            `⏱️ Preparación estimada: ${restaurante.tiempoEstimadoPreparacion}`
-        );
-
-
-        // ----------------------------------------------------
-        // 2. VERIFICAR INVENTARIO
-        // ----------------------------------------------------
-
-        console.log("\n🔎 PASO 2: INVENTARIO");
-
-        const resultadoInventario =
-            await validarInventario(
-                pedido.productos
-            );
-
-        if (!resultadoInventario.exito) {
-            throw new Error(
-                resultadoInventario.error
-            );
-        }
-
-        const total =
-            resultadoInventario.productos.reduce(
-                (acumulado, producto) =>
-                    acumulado +
-                    producto.precio *
-                    producto.cantidad,
-                0
-            );
-
-        console.log(
-            `💰 Total del pedido: $${total.toFixed(2)}`
-        );
-
-
-        // ----------------------------------------------------
-        // 3. PROCESAR PAGO
-        // ----------------------------------------------------
-
-        console.log("\n🔎 PASO 3: PAGO");
-
-        const pago = await procesarPago(
-            total,
-            pedido.cliente
-        );
-
-        idTransaccion =
-            pago.idTransaccion;
-
-        console.log(
-            `✅ Pago aprobado: ${idTransaccion}`
-        );
-
-
-        // ----------------------------------------------------
-        // 4. ASIGNAR REPARTIDOR
-        // ----------------------------------------------------
-
-        console.log("\n🔎 PASO 4: REPARTIDOR");
-
-        const repartidor =
-            await asignarRepartidor(
-                pedido.zonaEntrega
-            );
-
-        console.log(
-            `✅ Repartidor asignado: ${repartidor.idRepartidor}`
-        );
-
-        console.log(
-            `⏱️ Tiempo de búsqueda: ${repartidor.tiempoBusqueda}`
-        );
-
-
-        // ----------------------------------------------------
-        // 5. ENVIAR NOTIFICACIONES
-        // ----------------------------------------------------
-
-        console.log("\n🔎 PASO 5: NOTIFICACIONES");
-
-        await notificarCliente(
-            pedido.cliente
-        );
-
-
-        // ----------------------------------------------------
-        // PEDIDO FINALIZADO
-        // ----------------------------------------------------
-
-        console.log("\n");
-        console.log("================================================");
-        console.log("       🎉 PEDIDO PROCESADO CORRECTAMENTE");
-        console.log("================================================");
-
-        console.log(
-            `👤 Cliente: ${pedido.cliente.nombre}`
-        );
-
-        console.log(
-            `🏪 Restaurante: ${restaurante.nombre}`
-        );
-
-        console.log(
-            `🛵 Repartidor: ${repartidor.idRepartidor}`
-        );
-
-        console.log(
-            `💳 Transacción: ${idTransaccion}`
-        );
-
-        console.log(
-            "📢 Notificaciones procesadas."
-        );
-
-        console.log("================================================");
+        // RF-6: Resumen final en consola si todo sale bien
+        console.log(`\n📊 --- RESUMEN DEL PEDIDO ${pedido.identificador} ---`);
+        console.log(`ESTADO FINAL: 🎉 ENTREGADO CON ÉXITO`);
+        console.log(`TIEMPOS POR ETAPA:`, tiempos);
+        console.log(`RESULTADO DE NOTIFICACIONES:`);
+        reporteNotificaciones.detalles.forEach(n => {
+            console.log(`  - ${n.canal}: ${n.estado} ${n.error ? `(${n.error})` : ''}`);
+        });
 
     } catch (error) {
+        // RF-7: Captura global de fallos. El proceso de Node NUNCA termina abruptamente.
+        console.log(`\n❌ [ALERTA] Interrupción en el pedido ${pedido.identificador}`);
+        
+        // 1. Mensaje amigable para el cliente
+        console.log(`🗣️  Mensaje al cliente: "Lo sentimos, tuvimos un problema con tu orden: ${error.message}"`);
+        
+        // 2. Registro interno detallado para el equipo de soporte
+        console.log(`\n📋 [LOG DE SOPORTE INTERNO]`);
+        console.log(`   - Etapa de fallo: ${error.etapa || 'Desconocida'}`);
+        console.log(`   - Causa técnica: ${error.causa || 'Desconocida'}`);
+        console.log(`   - Datos del entorno:`, error.datos || 'N/A');
 
-        // ----------------------------------------------------
-        // MANEJO DE ERRORES
-        // ----------------------------------------------------
-
-        console.log("\n");
-        console.log("================================================");
-        console.log("           ❌ ERROR EN EL PEDIDO");
-        console.log("================================================");
-
-        console.log(
-            `⚠️ Motivo: ${error.message}`
-        );
-
-
-        // ----------------------------------------------------
-        // COMPENSACIÓN DEL PAGO
-        // ----------------------------------------------------
-
-        if (idTransaccion) {
-
-            console.log(
-                "\n🔄 El pago ya fue realizado."
-            );
-
-            await regresarPago(
-                idTransaccion
-            );
-
-        } else {
-
-            console.log(
-                "\nℹ️ No se realizó ningún pago."
-            );
+        // RF-4: Lógica de compensación. Si el error viene de la etapa 4 pero el pago (etapa 3) ya se hizo.
+        if (idTransaccionConfirmada && error.etapa === "Asignación de Repartidor") {
+            console.log(`\n⚠️ Detectado fallo logístico post-pago. Iniciando reversión automática...`);
+            await reversarPago(idTransaccionConfirmada);
         }
-
-        console.log(
-            "\n🛑 Pedido cancelado."
-        );
-
-        console.log("================================================");
+        
+        console.log(`\n🛑 ESTADO FINAL: PEDIDO CANCELADO`);
     }
-}
+};
 
+// ============================================
+// RF-7: Pruebas del Sistema (5 Pedidos)
+// ============================================
 
-// ============================================================
-// EJECUCIÓN DEL PROYECTO
-// ============================================================
+const pedidosDePrueba = [
+    {
+        identificador: "ORD-001", nombreCliente: "Ana Torres", restaurante: "Burger King",
+        zonaEntrega: "Norte", montoTotal: 25.500,
+        datosContacto: { correo: "ana@mail.com", telefono: "3001112233", nombre: "Ana" },
+        productos: [{ nombre: "Hamburguesa doble", cantidad: 2 }]
+    },
+    {
+        identificador: "ORD-002", nombreCliente: "Carlos Ruiz", restaurante: "Pizza Hut",
+        zonaEntrega: "Centro", montoTotal: 45.000,
+        datosContacto: { correo: "carlos@mail.com", telefono: "3004445566", nombre: "Carlos" },
+        productos: [{ nombre: "Pizza Familiar", cantidad: 1 }, { nombre: "Gaseosa 2L", cantidad: 1 }]
+    },
+    {
+        identificador: "ORD-003", nombreCliente: "Laura Gómez", restaurante: "Sushi Bar",
+        zonaEntrega: "Sur", montoTotal: 60.000,
+        datosContacto: { correo: "laura@mail.com", telefono: "3007778899", nombre: "Laura" },
+        productos: [{ nombre: "Roll California", cantidad: 3 }]
+    },
+    {
+        identificador: "ORD-004", nombreCliente: "Miguel Arce", restaurante: "Tacos El Rey",
+        zonaEntrega: "Oriente", montoTotal: 15.000,
+        datosContacto: { correo: "miguel@mail.com", telefono: "3000001111", nombre: "Miguel" },
+        productos: [{ nombre: "Tacos al pastor", cantidad: 5 }]
+    },
+    {
+        identificador: "ORD-005", nombreCliente: "Sofía Méndez", restaurante: "Wok Express",
+        zonaEntrega: "Occidente", montoTotal: 32.500,
+        datosContacto: { correo: "sofia@mail.com", telefono: "3002223344", nombre: "Sofía" },
+        productos: [{ nombre: "Arroz Frito", cantidad: 2 }, { nombre: "Rollos Primavera", cantidad: 1 }]
+    }
+];
 
-procesarPedido(pedido);
+// Ejecución secuencial de los 5 pedidos para observar el log de forma limpia
+const ejecutarPruebas = async () => {
+    console.log("🚀 INICIANDO SIMULADOR RÁPIDOYA...");
+    for (const pedido of pedidosDePrueba) {
+        await procesarPedido(pedido);
+        // Pequeña pausa entre pedidos para facilitar la lectura en consola
+        await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    console.log("\n✅ FIN DE LAS PRUEBAS DEL SISTEMA.");
+};
+
+// Iniciar el sistema
+ejecutarPruebas();
